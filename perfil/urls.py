@@ -1,0 +1,11 @@
+from django.urls import path
+from . import views
+
+urlpatterns=[
+    path('home/', views.home, name="nome"),
+    path('gerenciar/', views.gerenciar, name='gerencias'),
+    path('cadastrar_banco/', views.cadastrar_banco, name='cadastrar_banco'),
+    path('deletar_banco/<int:id>', views.deletar_banco, name='deletar_banco'),
+    path('cadastrar_categoria/', views.cadastrar_categoria, name='cadastrar_categoria'),
+    path('updade_categoria/<int:id>', views.update_categoria, name='update_categoria')
+]
