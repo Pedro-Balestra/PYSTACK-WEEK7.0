@@ -1,14 +1,33 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
+from datetime import datetime
+
+from extrato.models import Valores
 from .models import Conta, Categoria
 from django.contrib import messages
 from django.contrib.messages import constants
-from .utils import calcula_total
+from .utils import calcula_equilibrio_financeiro, calcula_total
 
 def home(request):
+    valores = Valores.objects.filter(data__month=datetime.now().month)
+
+    entradas =  valores.filter(tipo='E')
+    saidas =  valores.filter(tipo='S')
+
+    total_entradas = calcula_total(entradas,'valor')
+    total_saidas = calcula_total(saidas,'valor')
+
     contas = Conta.objects.all()
     total_conta=calcula_total(contas,'valor')
-    return render(request,'home.html', {'contas': contas,'total_conta': total_conta})
+
+    percetual_gastos_essenciaias, percetual_gastos_nao_essenciaias = calcula_equilibrio_financeiro()
+
+    return render(request,'home.html', {'contas': contas,
+                                        'total_conta': total_conta,
+                                        'total_entradas': total_entradas, 
+                                        'total_saidas': total_saidas, 
+                                        'percetual_gastos_essenciaias': int(percetual_gastos_essenciaias), 
+                                        'percetual_gastos_nao_essenciaias': int(percetual_gastos_nao_essenciaias)})
 
 def gerenciar(request):
     contas = Conta.objects.all()
@@ -69,3 +88,19 @@ def update_categoria(request, id):
     categoria.save()
 
     return redirect('/perfil/gerenciar/')
+
+def dashboard(request):
+
+    dados={}
+
+    categorias = Categoria.objects.all()
+    
+    for categoria in categorias:
+        total = 0
+        valores = Valores.objects.filter(categoria=categoria)
+        for v in valores:
+            total += v.valor
+
+        dados[categoria.categoria] = total
+
+    return render(request, 'dashboard.html', {'labels': list(dados.keys()), 'values': list(dados.values())})
